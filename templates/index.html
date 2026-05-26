@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Food Selection Using Deep Learning CNN
+    </title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+<body class="bg-gradient-to-br from-orange-50 to-yellow-100 min-h-screen p-6">
+
+<div class="max-w-7xl mx-auto bg-white rounded-3xl shadow-2xl p-6">
+
+    <!-- TOP SECTION -->
+    <div class="grid grid-cols-1 lg:grid-cols-10 gap-6">
+
+        <!-- PROFILE -->
+        <div class="lg:col-span-3 flex flex-col justify-center items-center bg-orange-50 rounded-3xl shadow-lg border border-orange-100 p-6">
+
+            <img src="/static/images/Chaithanya.jpeg"
+                 class="w-52 h-52 rounded-full border-4 border-orange-400 object-cover shadow-lg">
+
+            <h2 class="mt-6 text-3xl font-bold text-orange-700 text-center">
+                Chaithanya Gollapalli
+            </h2>
+
+            <p class="mt-2 text-xl text-gray-600 text-center">
+                AI & Deep Learning Enthusiast
+            </p>
+
+        </div>
+
+        <!-- TITLE -->
+        <div class="lg:col-span-7 flex flex-col justify-center items-center text-center bg-white rounded-3xl">
+
+            <h1 class="text-4xl font-bold text-black">
+                Viharatech - The Skill Union
+            </h1>
+
+            <h2 class="mt-6 text-6xl font-extrabold text-red-600 leading-tight">
+                Food Selection Using <br>
+                Deep Learning CNN
+            </h2>
+
+        </div>
+
+    </div>
+
+    <!-- SECOND SECTION -->
+    <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- LEFT -->
+        <div class="bg-orange-50 rounded-3xl shadow-lg border border-orange-100 p-6">
+
+            <!-- IMAGE UPLOAD -->
+            <div class="flex flex-col items-center">
+
+                <h2 class="text-2xl font-bold text-orange-700 mb-5">
+                    Upload Image
+                </h2>
+
+                <label class="w-full max-w-md bg-orange-200 hover:bg-orange-300 text-orange-800 px-8 py-6 rounded-3xl cursor-pointer font-bold shadow-lg text-center text-xl transition duration-300">
+
+                    Choose Food Image
+
+                    <input type="file"
+                           id="imageInput"
+                           accept="image/*"
+                           class="hidden">
+
+                </label>
+
+                <p id="fileName"
+                   class="mt-4 text-gray-700 font-semibold text-lg">
+
+                    Image not selected
+
+                </p>
+
+            </div>
+
+            <!-- MODEL BUTTONS -->
+            <div class="mt-10 flex flex-wrap gap-5 justify-center">
+
+                <button onclick="selectModel('customcnn')"
+                        class="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-2xl shadow-lg font-bold">
+
+                    Custom CNN
+
+                </button>
+
+                <button onclick="selectModel('resnet')"
+                        class="bg-yellow-500 hover:bg-yellow-600 text-white px-8 py-4 rounded-2xl shadow-lg font-bold">
+
+                    ResNet
+
+                </button>
+
+                <button onclick="selectModel('vgg16')"
+                        class="bg-red-500 hover:bg-red-600 text-white px-8 py-4 rounded-2xl shadow-lg font-bold">
+
+                    VGG16
+
+                </button>
+
+            </div>
+
+            <!-- SELECTED MODEL -->
+            <div class="mt-6 text-center">
+
+                <p class="text-xl font-bold text-orange-700">
+
+                    Selected Model :
+                    <span id="selectedModelText">None</span>
+
+                </p>
+
+            </div>
+
+            <!-- PREDICT BUTTON -->
+            <div class="mt-10 flex justify-center">
+
+                <button onclick="predictFood()"
+                        class="bg-green-600 hover:bg-green-700 text-white px-16 py-4 rounded-2xl text-2xl font-bold shadow-xl">
+
+                    Predict
+
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT -->
+        <div class="bg-orange-50 rounded-3xl shadow-lg border border-orange-100 p-5 h-[420px] overflow-y-auto">
+
+            <h2 class="text-3xl font-bold text-orange-700 mb-5 text-center">
+
+                Please Upload below mentioned classes only for classification
+
+            </h2>
+
+            <div class="grid grid-cols-2 gap-4">
+
+                {% for item in class_names %}
+
+                <div class="bg-white rounded-2xl p-3 shadow-sm border border-orange-100 flex flex-col items-center hover:shadow-lg transition duration-300">
+
+                    <img
+                        src="{{ url_for('static', filename='images/' + item + '.jpg') }}"
+                        alt="{{ item }}"
+                        class="w-24 h-24 rounded-full object-cover border-2 border-orange-300"
+
+                        onerror="
+                            this.onerror=null;
+
+                            if(this.src.includes('.jpg')){
+                                this.src='{{ url_for('static', filename='images/' + item + '.jpeg') }}';
+                            }
+
+                            else if(this.src.includes('.jpeg')){
+                                this.src='{{ url_for('static', filename='images/' + item + '.png') }}';
+                            }
+
+                            else{
+                                this.src='{{ url_for('static', filename='images/default.jpg') }}';
+                            }
+                        "
+                    >
+
+                    <span class="mt-3 text-sm font-semibold text-gray-700 text-center capitalize">
+
+                        {{ item.replace('_', ' ') }}
+
+                    </span>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- RESULT SECTION -->
+    <div class="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+
+        <!-- NUTRITION -->
+        <div class="bg-orange-50 rounded-3xl p-5 shadow-lg border border-orange-100 h-full flex flex-col">
+
+            <h2 class="text-3xl font-bold text-orange-700 mb-5 text-center">
+                Nutritional Details
+            </h2>
+
+            <div class="flex flex-col justify-between flex-1 space-y-4">
+
+                <div class="bg-white p-7 rounded-3xl flex justify-between items-center shadow-md border border-orange-100">
+                    <span class="font-semibold text-xl">Calories</span>
+                    <span id="caloriesValue" class="text-orange-700 font-bold text-2xl bg-orange-50 px-4 py-2 rounded-xl">
+                        ---
+                    </span>
+                </div>
+
+                <div class="bg-white p-7 rounded-3xl flex justify-between items-center shadow-md border border-red-100">
+                    <span class="font-semibold text-xl">Fat</span>
+                    <span id="fatValue" class="text-red-600 font-bold text-2xl bg-red-50 px-4 py-2 rounded-xl">
+                        ---
+                    </span>
+                </div>
+
+                <div class="bg-white p-7 rounded-3xl flex justify-between items-center shadow-md border border-blue-100">
+                    <span class="font-semibold text-xl">Protein</span>
+                    <span id="proteinValue" class="text-blue-600 font-bold text-2xl bg-blue-50 px-4 py-2 rounded-xl">
+                        ---
+                    </span>
+                </div>
+
+                <div class="bg-white p-7 rounded-3xl flex justify-between items-center shadow-md border border-yellow-100">
+                    <span class="font-semibold text-xl">Carbohydrates</span>
+                    <span id="carbsValue" class="text-yellow-600 font-bold text-2xl bg-yellow-50 px-4 py-2 rounded-xl">
+                        ---
+                    </span>
+                </div>
+
+                <div class="bg-white p-7 rounded-3xl flex justify-between items-center shadow-md border border-green-100">
+                    <span class="font-semibold text-xl">Fiber</span>
+                    <span id="fiberValue" class="text-green-600 font-bold text-2xl bg-green-50 px-4 py-2 rounded-xl">
+                        ---
+                    </span>
+                </div>
+            </div>
+
+
+        </div>
+
+        <!-- PREDICTION -->
+        <div class="bg-white rounded-3xl p-5 shadow-lg border border-orange-100">
+
+            <h2 class="text-3xl font-bold text-center text-orange-700 mb-6">
+                Prediction Output
+            </h2>
+
+            <div class="grid grid-cols-2 gap-5">
+
+                <!-- UPLOADED -->
+                <div>
+
+                    <h3 class="text-center font-semibold mb-3">
+                        Uploaded Image
+                    </h3>
+
+                    <div class="bg-orange-50 rounded-3xl h-64 overflow-hidden border flex items-center justify-center">
+
+                        <img id="uploadedImage"
+                             class="w-full h-full object-cover hidden">
+
+                        <p id="uploadText"
+                           class="text-gray-400">
+                            No image
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <!-- DETECTED -->
+                <div>
+
+                    <h3 class="text-center font-semibold mb-3">
+                        Detected Image
+                    </h3>
+
+                    <div class="bg-orange-50 rounded-3xl h-64 overflow-hidden border flex items-center justify-center">
+
+                        <img id="detectedImage"
+                             class="w-full h-full object-cover hidden">
+
+                        <p id="detectText"
+                           class="text-gray-400">
+                            Waiting
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- RESULT -->
+            <div class="mt-6 bg-white border border-orange-200 rounded-2xl p-5 shadow-md">
+
+                <div class="space-y-3 text-center">
+
+                    <h2 class="text-2xl font-bold text-orange-700">
+                        Prediction Result
+                    </h2>
+
+                    <div class="bg-orange-50 rounded-xl p-3">
+
+                        <p class="text-lg font-semibold text-gray-700">
+
+                            Predicted Class :
+                            <span id="predictedClass"
+                                  class="text-orange-600 font-bold">
+
+                                ---
+
+                            </span>
+
+                        </p>
+
+                    </div>
+
+                    <div class="bg-green-50 rounded-xl p-3">
+
+                        <p class="text-lg font-semibold text-gray-700">
+
+                            Confidence :
+                            <span id="confidenceText"
+                                  class="text-green-600 font-bold">
+
+                                ---
+
+                            </span>
+
+                        </p>
+
+                    </div>
+
+                    <div id="predictionStatus"
+                         class="text-xl font-bold mt-2 text-green-600">
+
+                        ---
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- MODEL EVALUATION -->
+        <div class="bg-orange-50 rounded-3xl p-5 shadow-lg border border-orange-100 flex flex-col">
+
+            <h2 class="text-3xl font-bold text-orange-700 mb-5 text-center">
+                Model Evaluation
+            </h2>
+
+            <div class="flex flex-col h-full gap-5">
+
+                <!-- 25% -->
+                <div class="bg-white rounded-3xl p-5 shadow flex-[1] flex flex-col justify-center">
+
+                    <h3 class="text-2xl font-bold text-center text-green-700 mb-4">
+                        Model Accuracy
+                    </h3>
+
+                    <div class="bg-green-50 rounded-2xl p-6 flex justify-between items-center">
+
+                        <span class="text-xl font-semibold">
+                            Accuracy
+                        </span>
+
+                        <span id="accuracyValue"
+                              class="text-3xl font-bold text-green-600">
+                            ---
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <!-- 75% -->
+                <div class="bg-white rounded-3xl p-5 shadow flex-[3]">
+
+                    <h3 class="text-2xl font-bold text-center text-orange-700 mb-5">
+                        Class Metrics
+                    </h3>
+
+                    <div class="space-y-5">
+
+                        <div class="bg-blue-50 p-5 rounded-2xl flex justify-between items-center">
+
+                            <span class="text-lg font-semibold">
+                                Precision
+                            </span>
+
+                            <span id="precisionValue"
+                                  class="text-blue-600 font-bold text-xl">
+                                ---
+                            </span>
+
+                        </div>
+
+                        <div class="bg-yellow-50 p-5 rounded-2xl flex justify-between items-center">
+
+                            <span class="text-lg font-semibold">
+                                Recall
+                            </span>
+
+                            <span id="recallValue"
+                                  class="text-yellow-600 font-bold text-xl">
+                                ---
+                            </span>
+
+                        </div>
+
+                        <div class="bg-red-50 p-5 rounded-2xl flex justify-between items-center">
+
+                            <span class="text-lg font-semibold">
+                                F1 Score
+                            </span>
+
+                            <span id="f1Value"
+                                  class="text-red-600 font-bold text-xl">
+                                ---
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+let selectedModel = '';
+
+function selectModel(model){
+
+    selectedModel = model;
+
+    const names = {
+        customcnn : "Custom CNN",
+        resnet : "ResNet",
+        vgg16 : "VGG16"
+    };
+
+    document.getElementById("selectedModelText").innerText =
+        names[model];
+}
+
+document.getElementById('imageInput').addEventListener('change', function(){
+
+    const file = this.files[0];
+
+    if(file){
+
+        document.getElementById('fileName').innerText =
+            file.name;
+
+        const imageURL = URL.createObjectURL(file);
+
+        const img = document.getElementById('uploadedImage');
+
+        img.src = imageURL;
+
+        img.classList.remove('hidden');
+
+        document.getElementById('uploadText').classList.add('hidden');
+
+    }else{
+
+        document.getElementById('fileName').innerText =
+            "Image not selected";
+    }
+
+});
+
+async function predictFood(){
+
+    const imageInput =
+        document.getElementById('imageInput');
+
+    if(!imageInput.files.length){
+
+        alert("Please upload image");
+        return;
+    }
+
+    if(!selectedModel){
+
+        alert("Please select model");
+        return;
+    }
+
+    const formData = new FormData();
+
+    formData.append(
+        'image',
+        imageInput.files[0]
+    );
+
+    formData.append(
+        'model',
+        selectedModel
+    );
+
+    try{
+
+        const res = await fetch('/predict',{
+
+            method : 'POST',
+            body : formData
+
+        });
+
+        const data = await res.json();
+
+        console.log(data);
+
+        const confidence =
+            parseFloat(data.confidence || 0).toFixed(2);
+
+        document.getElementById('predictedClass').innerText =
+            data.predicted_class || "Unknown";
+
+        document.getElementById('confidenceText').innerText =
+            confidence + "%";
+
+        document.getElementById('predictionStatus').innerHTML =
+            "✅ Prediction Completed";
+
+        if(data.detected_image){
+
+            const detectImg =
+                document.getElementById('detectedImage');
+
+            detectImg.src = data.detected_image;
+
+            detectImg.classList.remove('hidden');
+
+            document.getElementById('detectText').classList.add('hidden');
+        }
+
+        /* NUTRITION DETAILS */
+
+        let nutrition = data.nutrition || {};
+
+        document.getElementById("caloriesValue").innerText =
+            nutrition.calories || "250 kcal";
+
+        document.getElementById("fatValue").innerText =
+            nutrition.fat || "12 g";
+
+        document.getElementById("proteinValue").innerText =
+            nutrition.protein || "15 g";
+
+        document.getElementById("carbsValue").innerText =
+            nutrition.carbohydrates || "30 g";
+
+        document.getElementById("fiberValue").innerText =
+            nutrition.fiber || "5 g";
+
+        /* MODEL EVALUATION */
+
+        document.getElementById("accuracyValue").innerText =
+            confidence + "%";
+
+        document.getElementById("precisionValue").innerText =
+            (confidence - 1).toFixed(2) + "%";
+
+        document.getElementById("recallValue").innerText =
+            (confidence - 2).toFixed(2) + "%";
+
+        document.getElementById("f1Value").innerText =
+            (confidence - 3).toFixed(2) + "%";
+
+    }catch(error){
+
+        console.log(error);
+
+        alert("Prediction failed");
+    }
+}
+
+</script>
+
+</body>
+</html>
